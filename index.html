@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Anonymous Messenger</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:16px;max-width:700px}
+    .hidden{display:none}
+    .msg{border:1px solid #ddd;padding:8px;margin:6px 0;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h2>Anonymous Messenger</h2>
+  <div id="auth">
+    <input id="email" placeholder="your@email.com" />
+    <button id="loginBtn">Send magic link</button>
+    <div id="authStatus"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div>
+      <button id="signOut">Sign out</button>
+      <span id="who"></span>
+    </div>
+    <h3>Send Message</h3>
+    <input id="recipient" placeholder="Recipient user ID"/><br/>
+    <textarea id="body" rows="4" cols="50" placeholder="Write your message..."></textarea><br/>
+    <label><input type="checkbox" id="anonymous"/> Send anonymously</label><br/>
+    <input id="nameHint" placeholder="optional name when anonymous"/><br/>
+    <button id="sendBtn">Send</button>
+    <div id="sendResult"></div>
+
+    <h3>Inbox</h3>
+    <div id="inbox"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+    const SUPABASE_ANON = 'YOUR_ANON_KEY';
+    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    const email = document.getElementById('email');
+    const loginBtn = document.getElementById('loginBtn');
+    const authStatus = document.getElementById('authStatus');
+    const app = document.getElementById('app');
+    const who = document.getElementById('who');
+    const signOut = document.getElementById('signOut');
+
+    const recipient = document.getElementById('recipient');
+    const body = document.getElementById('body');
+    const anonymous = document.getElementById('anonymous');
+    const nameHint = document.getElementById('nameHint');
+    const sendBtn = document.getElementById('sendBtn');
+    const sendResult = document.getElementById('sendResult');
+    const inbox = document.getElementById('inbox');
+
+    loginBtn.onclick = async () => {
+      const e = email.value;
+      if(!e) return authStatus.innerText = 'Enter email';
+      const { error } = await supabase.auth.signInWithOtp({ email: e });
+      authStatus.innerText = error ? error.message : 'Check your email for the magic link';
+    };
+
+    supabase.auth.getSession().then(({ data }) => updateUI(data.session));
+    supabase.auth.onAuthStateChange((_, session) => updateUI(session));
+
+    function updateUI(session){
+      if(session?.user){
+        document.getElementById('auth').classList.add('hidden');
+        app.classList.remove('hidden');
+        who.innerText = `Signed in as ${session.user.email}`;
+        loadInbox(session.user.id);
+      } else {
+        document.getElementById('auth').classList.remove('hidden');
+        app.classList.add('hidden');
+      }
+    }
+
+    signOut.onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+
+    async function loadInbox(userId){
+      const { data, error } = await supabase.from('messages')
+        .select('*').eq('recipient', userId).order('created_at', { ascending: false });
+      if(error) return inbox.innerText = error.message;
+      inbox.innerHTML = data.map(m => `<div class='msg'><b>${m.anonymous ? (m.sender_name_hint||'Anonymous') : 'User: '+m.sender}</b><br>${m.body}</div>`).join('');
+    }
+
+    sendBtn.onclick = async () => {
+      const rec = recipient.value.trim();
+      if(!rec) return sendResult.innerText = 'Enter recipient id';
+      const session = (await supabase.auth.getSession()).data.session;
+      const payload = {
+        recipient: rec,
+        body: body.value,
+        anonymous: anonymous.checked,
+        sender_name_hint: nameHint.value||null,
+        sender: (!anonymous.checked && session?.user?.id) ? session.user.id : null
+      };
+      const { error } = await supabase.from('messages').insert([payload]);
+      sendResult.innerText = error ? error.message : 'Message sent!';
+      body.value = ''; loadInbox(session.user.id);
+    };
+  </script>
+</body>
+</html>
