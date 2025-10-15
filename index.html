@@ -37,9 +37,9 @@
   </div>
 
   <script>
-    const SUPABASE_URL = https://jtnrsphztfietfyrsdmc.supabase.co;
-    const SUPABASE_ANON = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bnJzcGh6dGZpZXRmeXJzZG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk4NjMsImV4cCI6MjA3NjA5NTg2M30.skl7T1F8w0fzTmHtiCPJf9AJdZPbSfDwm4zpLfvvaBk;
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON);
+    const SUPABASE_URL = 'https://jtnrsphztfietfyrsdmc.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bnJzcGh6dGZpZXRmeXJzZG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk4NjMsImV4cCI6MjA3NjA5NTg2M30.skl7T1F8w0fzTmHtiCPJf9AJdZPbSfDwm4zpLfvvaBk';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
     const email = document.getElementById('email');
     const loginBtn = document.getElementById('loginBtn');
